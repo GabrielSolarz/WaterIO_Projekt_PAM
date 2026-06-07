@@ -1,0 +1,11 @@
+# Dlaczego aplikacja wymaga smartfona?
+
+Projekt aplikacji do monitorowania nawodnienia organizmu został celowo zaprojektowany jako aplikacja mobilna, ponieważ specyfika jej działania wyklucza skuteczne i wygodne użycie w formie klasycznej aplikacji desktopowej lub strony WWW. Zastosowanie fizycznego smartfona z systemem Android jest kluczowe do spełnienia założeń projektu z następujących powodów: 
+
+* Mobilność i ciągły kontekst użycia (Real-time tracking): Proces spożywania płynów jest rozłożony na cały dzień i odbywa się w różnych, często zmieniających się lokalizacjach (na siłowni, w drodze do pracy, na spacerze). Smartfon to jedyne urządzenie, które użytkownik ma zawsze przy sobie w kieszeni. Pozwala to na natychmiastowe zarejestrowanie wypitej wody za pomocą kilku dotknięć ekranu. Aplikacja desktopowa zmuszałaby użytkownika do zapamiętywania wypitych ilości i wprowadzania ich zbiorczo po powrocie do komputera, co całkowicie niszczy aspekt budowania nawyku. 
+
+* Wykorzystanie natywnych powiadomień Push (Kluczowy mechanizm motywacyjny): Zgodnie z założeniami, aplikacja ma "przypominać o regularnym piciu wody". Realizacja tego wymogu opiera się na natywnym API powiadomień systemu Android. W przeciwieństwie do powiadomień przeglądarkowych na PC, smartfon wygeneruje wibrację, dźwięk i wyświetli komunikat na zablokowanym ekranie dokładnie wtedy, gdy organizm potrzebuje wody (np. po 3 godzinach braku aktywności). Gwarantuje to, że przypomnienie faktycznie dotrze do użytkownika niezależnie od tego, co aktualnie robi. 
+
+* Podejście Offline-First (Natywne przechowywanie danych): Aplikacja mobilna może być używana w miejscach bez zasięgu sieci komórkowej czy Wi-Fi (np. w górach, na basenie, w halach sportowych). Dzięki wykorzystaniu lokalnej, natywnej bazy danych urządzenia (Room), użytkownik wciąż może aktualizować swój progres dzienny. Aplikacja płynnie obsłuży ten stan i zsynchronizuje informacje z backendem w tle, gdy tylko telefon odzyska połączenie z internetem. 
+
+* Interfejs zoptymalizowany pod gesty: Aplikacja wymaga od użytkownika częstych, ale bardzo krótkich (kilkusekundowych) interakcji. Wykorzystanie ekranu dotykowego i szybkiej autoryzacji ułatwia dodanie wpisu "w biegu", czego nie da się równie ergonomicznie odwzorować przy użyciu myszki i klawiatury. 
