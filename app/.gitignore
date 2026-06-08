@@ -1,0 +1,56 @@
+# =========================================================================
+# SYSTEMOWE ŚMIECI (OS-specific)
+# =========================================================================
+*.DS_Store
+.directory
+Thumbs.db
+
+# =========================================================================
+# ANDROID STUDIO & IDEA
+# =========================================================================
+.idea/
+# Ignorujemy lokalne ustawienia użytkownika, ale zachowujemy podstawowe konfiguracje
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/modules.xml
+.idea/caches/
+.idea/libraries/
+*.iml
+*.ipr
+*.iws
+
+# =========================================================================
+# GRADLE (Pliki budowania i pamięć podręczna)
+# =========================================================================
+.gradle/
+build/
+app/build/
+captures/
+
+# =========================================================================
+# BEZPIECZEŃSTWO I SEKRETY (Pliki lokalne)
+# =========================================================================
+# Tu trzymasz ścieżkę do Android SDK oraz swoje prywatne klucze API
+local.properties
+
+# Pliki zawierające klucze do podpisywania wersji produkcyjnej aplikacji (.apk / .aab)
+*.jks
+*.keystore
+*.p12
+
+# Klucze i konfiguracje Google Services (jeśli chcesz je ukryć, np. w publicznych repo)
+# google-services.json
+
+# =========================================================================
+# LOGI I PLIKI TYMCZASOWE
+# =========================================================================
+*.log
+.navigation/
+
+# =========================================================================
+# URZĄDZENIA I EMULATORY
+# =========================================================================
+# Pliki generowane podczas profilowania aplikacji i zrzuty pamięci
+*.hprof
