@@ -1,4 +1,4 @@
-package com.example.waterio.notifications
+package com.pam.waterio.notifications
 
 import android.app.NotificationChannel
 import android.app.NotificationManager

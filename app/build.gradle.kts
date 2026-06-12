@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.waterio"
+    namespace = "com.pam.waterio"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.waterio"
+        applicationId = "com.pam.waterio"
         minSdk = 24
         targetSdk = 36
         versionCode = 1

@@ -1,4 +1,4 @@
-package com.example.waterio
+package com.pam.waterio
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -20,11 +20,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.*
 import androidx.room.Room
-import com.example.waterio.data.AppDatabase
-import com.example.waterio.data.TokenManager
-import com.example.waterio.network.WaterApiService
-import com.example.waterio.ui.AuthState
-import com.example.waterio.ui.WaterViewModel
+import com.pam.waterio.data.AppDatabase
+import com.pam.waterio.data.TokenManager
+import com.pam.waterio.network.WaterApiService
+import com.pam.waterio.ui.AuthState
+import com.pam.waterio.ui.WaterViewModel
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 

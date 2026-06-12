@@ -1,4 +1,4 @@
-package com.example.waterio.data
+package com.pam.waterio.data
 
 import androidx.room.*
 import java.util.UUID

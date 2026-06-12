@@ -1,4 +1,4 @@
-package com.example.waterio
+package com.pam.waterio
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

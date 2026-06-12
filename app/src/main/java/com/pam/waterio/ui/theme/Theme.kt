@@ -1,4 +1,4 @@
-package com.example.waterio.ui.theme
+package com.pam.waterio.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

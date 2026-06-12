@@ -1,4 +1,4 @@
-package com.example.waterio.network
+package com.pam.waterio.network
 
 import retrofit2.Response
 import retrofit2.http.*

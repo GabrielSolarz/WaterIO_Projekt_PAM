@@ -1,4 +1,4 @@
-package com.example.waterio.ui
+package com.pam.waterio.ui
 
 import android.app.AlarmManager
 import android.app.PendingIntent
@@ -7,12 +7,12 @@ import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.*
-import com.example.waterio.data.TokenManager
-import com.example.waterio.data.WaterDao
-import com.example.waterio.data.WaterEntry
-import com.example.waterio.network.*
-import com.example.waterio.notifications.WaterNotificationReceiver
-import com.example.waterio.sync.SyncWorker
+import com.pam.waterio.data.TokenManager
+import com.pam.waterio.data.WaterDao
+import com.pam.waterio.data.WaterEntry
+import com.pam.waterio.network.*
+import com.pam.waterio.notifications.WaterNotificationReceiver
+import com.pam.waterio.sync.SyncWorker
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -173,7 +173,7 @@ class WaterViewModel(
 
                 val remoteHistory = api.getHistory(bearer)
                 remoteHistory.forEach {
-                    dao.insert(com.example.waterio.data.WaterEntry(it.id ?: "", it.amountMl, it.timestamp ?: 0L, isSynced = true))
+                    dao.insert(com.pam.waterio.data.WaterEntry(it.id ?: "", it.amountMl, it.timestamp ?: 0L, isSynced = true))
                 }
 
                 _streak.value = api.getStreak(bearer).streak

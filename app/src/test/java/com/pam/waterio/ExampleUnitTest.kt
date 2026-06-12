@@ -1,4 +1,4 @@
-package com.example.waterio
+package com.pam.waterio
 
 import org.junit.Test
 

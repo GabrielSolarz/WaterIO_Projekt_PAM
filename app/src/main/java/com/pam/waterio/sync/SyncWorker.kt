@@ -1,14 +1,14 @@
-package com.example.waterio.sync
+package com.pam.waterio.sync
 
 import android.content.Context
 import android.util.Log
 import androidx.room.Room
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.example.waterio.data.AppDatabase
-import com.example.waterio.data.TokenManager
-import com.example.waterio.network.WaterApiService
-import com.example.waterio.network.WaterNetworkEntry
+import com.pam.waterio.data.AppDatabase
+import com.pam.waterio.data.TokenManager
+import com.pam.waterio.network.WaterApiService
+import com.pam.waterio.network.WaterNetworkEntry
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 

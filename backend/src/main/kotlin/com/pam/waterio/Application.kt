@@ -1,4 +1,4 @@
-package com.example.waterio
+package com.pam.waterio
 
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*

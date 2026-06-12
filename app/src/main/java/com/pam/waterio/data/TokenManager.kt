@@ -1,4 +1,4 @@
-package com.example.waterio.data
+package com.pam.waterio.data
 
 import android.content.Context
 
