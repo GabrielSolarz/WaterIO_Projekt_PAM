@@ -1,18 +1,41 @@
 package com.example.waterio.network
 
+import retrofit2.Response
 import retrofit2.http.*
 
-data class LoginRequest(val email: String, val password: String)
+data class AuthRequest(val email: String, val password: String)
 data class AuthResponse(val token: String)
-data class WaterRequest(val amount_ml: Int)
+data class RegisterResponse(val status: String)
+data class WaterNetworkEntry(val id: String?, val amountMl: Int, val timestamp: Long?)
+data class DailyGoal(val goalMl: Int)
+data class DailyStat(val date: String, val totalMl: Int)
+data class StreakResponse(val streak: Int)
 
 interface WaterApiService {
-    @POST("/api/login")
-    suspend fun login(@Body request: LoginRequest): AuthResponse
+    @POST("/register")
+    suspend fun register(@Body request: AuthRequest): Response<RegisterResponse>
 
-    @POST("/api/water")
-    suspend fun addWater(@Header("Authorization") token: String, @Body request: WaterRequest)
+    @POST("/login")
+    suspend fun login(@Body request: AuthRequest): Response<AuthResponse>
 
-    @GET("/api/water/today")
-    suspend fun getTodayWater(@Header("Authorization") token: String): Map<String, Int>
+    @GET("/water")
+    suspend fun getHistory(@Header("Authorization") token: String): List<WaterNetworkEntry>
+
+    @POST("/water")
+    suspend fun addWater(@Header("Authorization") token: String, @Body request: WaterNetworkEntry): WaterNetworkEntry
+
+    @DELETE("/water/{id}")
+    suspend fun deleteWater(@Header("Authorization") token: String, @Path("id") id: String): Response<Unit>
+
+    @GET("/user/goal")
+    suspend fun getGoal(@Header("Authorization") token: String): DailyGoal
+
+    @POST("/user/goal")
+    suspend fun updateGoal(@Header("Authorization") token: String, @Body goal: DailyGoal): DailyGoal
+
+    @GET("/stats")
+    suspend fun getStats(@Header("Authorization") token: String): List<DailyStat>
+
+    @GET("/streak")
+    suspend fun getStreak(@Header("Authorization") token: String): StreakResponse
 }
