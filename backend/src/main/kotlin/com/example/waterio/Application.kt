@@ -29,6 +29,12 @@ data class AuthRequest(val email: String, val password: String)
 @Serializable
 data class AuthResponse(val token: String)
 
+@Serializable
+data class DailyGoal(val goalMl: Int)
+
+@Serializable
+data class DailyStat(val date: String, val totalMl: Int)
+
 val jwtSecret = "secret-key-waterio-2024" // W prawdziwym projekcie użyj zmiennej środowiskowej!
 val jwtIssuer = "com.example.waterio"
 val jwtAudience = "waterio-users"
@@ -159,6 +165,67 @@ fun Application.configureRouting() {
                     if (deleted > 0) call.respond(mapOf("status" to "Deleted"))
                     else call.respond(HttpStatusCode.NotFound)
                 }
+            }
+
+            route("/user/goal") {
+                get {
+                    val principal = call.principal<JWTPrincipal>()
+                    val userId = principal!!.payload.getClaim("userId").asString()
+                    val user = transaction {
+                        UsersTable.selectAll().where { UsersTable.id eq userId }.singleOrNull()
+                    }
+                    if (user != null) {
+                        call.respond(DailyGoal(user[UsersTable.dailyGoalMl]))
+                    } else {
+                        call.respond(HttpStatusCode.NotFound)
+                    }
+                }
+
+                post {
+                    val principal = call.principal<JWTPrincipal>()
+                    val userId = principal!!.payload.getClaim("userId").asString()
+                    val req = call.receive<DailyGoal>()
+                    
+                    if (req.goalMl <= 0) {
+                        call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Goal must be greater than 0"))
+                        return@post
+                    }
+
+                    transaction {
+                        UsersTable.update({ UsersTable.id eq userId }) {
+                            it[dailyGoalMl] = req.goalMl
+                        }
+                    }
+                    call.respond(HttpStatusCode.OK, req)
+                }
+            }
+
+            get("/stats") {
+                val principal = call.principal<JWTPrincipal>()
+                val userId = principal!!.payload.getClaim("userId").asString()
+                
+                // Pobieramy dane z ostatnich 7 dni
+                val sevenDaysAgo = System.currentTimeMillis() - (7 * 24 * 3600 * 1000L)
+                
+                val stats = transaction {
+                    WaterEntriesTable.selectAll()
+                        .where { (WaterEntriesTable.userId eq userId) and (WaterEntriesTable.timestamp greaterEq sevenDaysAgo) }
+                        .map { 
+                            it[WaterEntriesTable.timestamp] to it[WaterEntriesTable.amountMl]
+                        }
+                }
+
+                // Grupowanie w pamięci po datach (YYYY-MM-DD)
+                val grouped = stats.groupBy { 
+                    val date = java.time.Instant.ofEpochMilli(it.first)
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .toLocalDate()
+                    date.toString()
+                }.map { (date, entries) ->
+                    DailyStat(date, entries.sumOf { it.second })
+                }.sortedByDescending { it.date }
+
+                call.respond(grouped)
             }
         }
     }
