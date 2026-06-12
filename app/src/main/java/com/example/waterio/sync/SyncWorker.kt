@@ -1,6 +1,7 @@
 package com.example.waterio.sync
 
 import android.content.Context
+import android.util.Log
 import androidx.room.Room
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -18,31 +19,42 @@ class SyncWorker(appContext: Context, workerParams: WorkerParameters) : Coroutin
         val token = tokenManager.getToken() ?: return Result.failure()
         val bearerToken = "Bearer $token"
 
-        val db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "water-database").build()
+        val db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "water-database")
+            .fallbackToDestructiveMigration()
+            .build()
         val dao = db.waterDao()
 
         val retrofit = Retrofit.Builder()
-            // 10.0.2.2 to adres IP komputera hosta widoczny z poziomu emulatora Androida
             .baseUrl("http://10.0.2.2:8080/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
         val api = retrofit.create(WaterApiService::class.java)
 
-        try {
-            // Zsynchronizuj nieprzysłane wpisy lokalne do API
+        return try {
             val unsynced = dao.getUnsyncedEntries()
+            Log.d("WaterSync", "Found ${unsynced.size} unsynced entries")
+            
             unsynced.forEach { entry ->
                 if (entry.isDeletedLocally) {
                     api.deleteWater(bearerToken, entry.id)
                     dao.deletePermanently(entry.id)
                 } else {
-                    api.addWater(bearerToken, WaterNetworkEntry(entry.id, entry.amountMl, entry.timestamp))
-                    dao.insert(entry.copy(isSynced = true))
+                    val result = api.addWater(bearerToken, WaterNetworkEntry(entry.id, entry.amountMl, entry.timestamp))
+                    // Usuwamy stary wpis i wstawiamy nowy z ID z serwera (jeśli się różnią)
+                    if (result.id != null && result.id != entry.id) {
+                        dao.deletePermanently(entry.id)
+                        dao.insert(entry.copy(id = result.id, isSynced = true))
+                    } else {
+                        dao.insert(entry.copy(isSynced = true))
+                    }
                 }
             }
-            return Result.success()
+            Result.success()
         } catch (e: Exception) {
-            return Result.retry()
+            Log.e("WaterSync", "Sync failed: ${e.message}", e)
+            Result.retry()
+        } finally {
+            db.close()
         }
     }
 }

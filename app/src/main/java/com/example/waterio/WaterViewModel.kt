@@ -103,7 +103,6 @@ class WaterViewModel(
         viewModelScope.launch {
             val newEntry = WaterEntry(amountMl = amount, isSynced = false)
             dao.insert(newEntry)
-            triggerOfflineSync()
             loadLocalData()
             scheduleNotification()
 
@@ -111,12 +110,22 @@ class WaterViewModel(
             val token = tokenManager.getToken()
             if (token != null) {
                 try {
-                    api.addWater("Bearer $token", WaterNetworkEntry(newEntry.id, amount, newEntry.timestamp))
-                    dao.insert(newEntry.copy(isSynced = true))
+                    val result = api.addWater("Bearer $token", WaterNetworkEntry(newEntry.id, amount, newEntry.timestamp))
+                    
+                    // Jeśli serwer nadał nowe ID, podmieniamy lokalnie, aby uniknąć duplikatów przy refreshData()
+                    if (result.id != null && result.id != newEntry.id) {
+                        dao.deletePermanently(newEntry.id)
+                        dao.insert(newEntry.copy(id = result.id, isSynced = true))
+                    } else {
+                        dao.insert(newEntry.copy(isSynced = true))
+                    }
                     refreshData()
                 } catch (e: Exception) {
-                    // Ignorujemy błąd - zostanie zsynchronizowane przez WorkManager
+                    // W razie błędu odpalamy WorkManagera
+                    triggerOfflineSync()
                 }
+            } else {
+                triggerOfflineSync()
             }
         }
     }
@@ -124,7 +133,6 @@ class WaterViewModel(
     fun deleteEntry(id: String) {
         viewModelScope.launch {
             dao.markAsDeleted(id)
-            triggerOfflineSync()
             loadLocalData()
 
             val token = tokenManager.getToken()
@@ -133,7 +141,11 @@ class WaterViewModel(
                     api.deleteWater("Bearer $token", id)
                     dao.deletePermanently(id)
                     refreshData()
-                } catch (e: Exception) { /* SyncWorker ponowi próbę */ }
+                } catch (e: Exception) {
+                    triggerOfflineSync()
+                }
+            } else {
+                triggerOfflineSync()
             }
         }
     }
@@ -161,13 +173,15 @@ class WaterViewModel(
 
                 val remoteHistory = api.getHistory(bearer)
                 remoteHistory.forEach {
-                    dao.insert(WaterEntry(it.id ?: "", it.amountMl, it.timestamp ?: 0L, isSynced = true))
+                    dao.insert(com.example.waterio.data.WaterEntry(it.id ?: "", it.amountMl, it.timestamp ?: 0L, isSynced = true))
                 }
 
                 _streak.value = api.getStreak(bearer).streak
                 _stats.value = api.getStats(bearer)
                 loadLocalData()
-            } catch (e: Exception) {}
+            } catch (e: Exception) {
+                android.util.Log.e("WaterViewModel", "Refresh failed: ${e.message}", e)
+            }
         }
     }
 
@@ -176,8 +190,14 @@ class WaterViewModel(
             val localEntries = dao.getAllEntries()
             _history.value = localEntries
 
-            // Filtrowanie i sumowanie dzisiejszego spożycia lokalnie
-            val startOfDay = System.currentTimeMillis() - (System.currentTimeMillis() % (24 * 60 * 60 * 1000))
+            // Filtrowanie i sumowanie dzisiejszego spożycia lokalnie (czas lokalny)
+            val calendar = java.util.Calendar.getInstance().apply {
+                set(java.util.Calendar.HOUR_OF_DAY, 0)
+                set(java.util.Calendar.MINUTE, 0)
+                set(java.util.Calendar.SECOND, 0)
+                set(java.util.Calendar.MILLISECOND, 0)
+            }
+            val startOfDay = calendar.timeInMillis
             _totalWater.value = localEntries.filter { it.timestamp >= startOfDay }.sumOf { it.amountMl }
         }
     }
@@ -190,6 +210,19 @@ class WaterViewModel(
 
     private fun scheduleNotification() {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        
+        // Na Android 13+ musimy sprawdzić, czy mamy uprawnienie do dokładnych alarmów
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            if (!alarmManager.canScheduleExactAlarms()) {
+                // Jeśli nie mamy uprawnień, używamy zwykłego alarmu (nie będzie on co do sekundy)
+                val intent = Intent(context, WaterNotificationReceiver::class.java)
+                val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                val triggerTime = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(3)
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent)
+                return
+            }
+        }
+
         val intent = Intent(context, WaterNotificationReceiver::class.java)
         val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
