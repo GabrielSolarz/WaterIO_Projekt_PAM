@@ -30,14 +30,14 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         compose = true
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 }
 
@@ -79,4 +79,7 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:$workVersion")
 
     implementation("androidx.compose.material:material-icons-extended:1.7.6")
+}
+configurations.all {
+    exclude(group = "com.intellij", module = "annotations")
 }
