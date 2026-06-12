@@ -32,9 +32,13 @@ ktor-server-content-negotiation = { group = "io.ktor", name = "ktor-server-conte
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json-jvm", version.ref = "ktor" }
 ktor-server-cors = { group = "io.ktor", name = "ktor-server-cors-jvm", version.ref = "ktor" }
 logback = { group = "ch.qos.logback", name = "logback-classic", version = "1.5.16" }
+exposed-core = { group = "org.jetbrains.exposed", name = "exposed-core", version = "0.59.0" }
+exposed-dao = { group = "org.jetbrains.exposed", name = "exposed-dao", version = "0.59.0" }
+exposed-jdbc = { group = "org.jetbrains.exposed", name = "exposed-jdbc", version = "0.59.0" }
+h2 = { group = "com.h2database", name = "h2", version = "2.3.232" }
+bcrypt = { group = "org.mindrot", name = "jbcrypt", version = "0.4" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-kbackend = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 

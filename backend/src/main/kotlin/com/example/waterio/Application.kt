@@ -2,6 +2,8 @@ package com.example.waterio
 
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
+import io.ktor.server.auth.*
+import io.ktor.server.auth.jwt.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
@@ -11,64 +13,151 @@ import io.ktor.server.request.*
 import io.ktor.http.*
 import kotlinx.serialization.Serializable
 import java.util.*
+import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.transactions.transaction
+import com.auth0.jwt.JWT
+import com.auth0.jwt.algorithms.Algorithm
+import org.mindrot.jbcrypt.BCrypt
 
 @Serializable
-data class WaterEntry(
-    val id: String? = null,
-    val amountMl: Int,
-    val timestamp: Long? = null
-)
+data class WaterEntry(val id: String? = null, val amountMl: Int, val timestamp: Long? = null)
 
-val waterEntries = mutableListOf<WaterEntry>()
+@Serializable
+data class AuthRequest(val email: String, val password: String)
+
+@Serializable
+data class AuthResponse(val token: String)
+
+val jwtSecret = "secret-key-waterio-2024" // W prawdziwym projekcie użyj zmiennej środowiskowej!
+val jwtIssuer = "com.example.waterio"
+val jwtAudience = "waterio-users"
 
 fun main() {
+    initDatabase()
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
         .start(wait = true)
 }
 
 fun Application.module() {
     install(ContentNegotiation) {
-        json()
+        json(kotlinx.serialization.json.Json {
+            ignoreUnknownKeys = true
+            prettyPrint = true
+        })
     }
+
+    install(Authentication) {
+        jwt("auth-jwt") {
+            realm = "Access to water entries"
+            verifier(
+                JWT.require(Algorithm.HMAC256(jwtSecret))
+                    .withAudience(jwtAudience)
+                    .withIssuer(jwtIssuer)
+                    .build()
+            )
+            validate { credential ->
+                val email = credential.payload.getClaim("email").asString()
+                val userId = credential.payload.getClaim("userId").asString()
+                if (email != null && userId != null) {
+                    JWTPrincipal(credential.payload)
+                } else {
+                    null
+                }
+            }
+        }
+    }
+
     configureRouting()
 }
 
 fun Application.configureRouting() {
     routing {
-        get("/") {
-            call.respondText("WaterIO Backend is running!")
-        }
-        
-        get("/health") {
-            call.respond(mapOf("status" to "OK"))
-        }
+        get("/") { call.respondText("WaterIO Backend with Auth!") }
 
-        route("/water") {
-            get {
-                call.respond(waterEntries)
-            }
+        post("/register") {
+            val req = call.receive<AuthRequest>()
+            val userId = UUID.randomUUID().toString()
+            val hashedPw = BCrypt.hashpw(req.password, BCrypt.gensalt())
             
-            post {
-                try {
-                    val entry = call.receive<WaterEntry>()
-                    val newEntry = entry.copy(
-                        id = UUID.randomUUID().toString(), 
-                        timestamp = System.currentTimeMillis()
-                    )
-                    waterEntries.add(newEntry)
-                    call.respond(HttpStatusCode.Created, newEntry)
-                } catch (e: Exception) {
-                    call.respond(HttpStatusCode.BadRequest, mapOf("error" to e.message))
+            try {
+                transaction {
+                    UsersTable.insert {
+                        it[id] = userId
+                        it[email] = req.email
+                        it[passwordHash] = hashedPw
+                    }
                 }
+                call.respond(HttpStatusCode.Created, mapOf("status" to "User registered"))
+            } catch (e: Exception) {
+                e.printStackTrace()
+                call.respond(HttpStatusCode.Conflict, mapOf("error" to "Email already exists or database error"))
+            }
+        }
+
+        post("/login") {
+            val req = call.receive<AuthRequest>()
+            val user = transaction {
+                UsersTable.selectAll().where { UsersTable.email eq req.email }.singleOrNull()
             }
 
-            delete("/{id}") {
-                val id = call.parameters["id"]
-                val removed = waterEntries.removeIf { it.id == id }
-                if (removed) {
-                    call.respond(HttpStatusCode.OK, mapOf("status" to "Deleted"))
-                } else {
-                    call.respondText("Not Found", status = HttpStatusCode.NotFound)
+            if (user != null && BCrypt.checkpw(req.password, user[UsersTable.passwordHash])) {
+                val token = JWT.create()
+                    .withAudience(jwtAudience)
+                    .withIssuer(jwtIssuer)
+                    .withClaim("email", user[UsersTable.email])
+                    .withClaim("userId", user[UsersTable.id])
+                    .withExpiresAt(Date(System.currentTimeMillis() + 3600000 * 24)) // 24h
+                    .sign(Algorithm.HMAC256(jwtSecret))
+                call.respond(AuthResponse(token))
+            } else {
+                call.respond(HttpStatusCode.Unauthorized, mapOf("error" to "Invalid credentials"))
+            }
+        }
+
+        authenticate("auth-jwt") {
+            route("/water") {
+                get {
+                    val principal = call.principal<JWTPrincipal>()
+                    val userId = principal!!.payload.getClaim("userId").asString()
+                    
+                    val entries = transaction {
+                        WaterEntriesTable.selectAll().where { WaterEntriesTable.userId eq userId }.map {
+                            WaterEntry(it[WaterEntriesTable.id], it[WaterEntriesTable.amountMl], it[WaterEntriesTable.timestamp])
+                        }
+                    }
+                    call.respond(entries)
+                }
+
+                post {
+                    val principal = call.principal<JWTPrincipal>()
+                    val userId = principal!!.payload.getClaim("userId").asString()
+                    val entry = call.receive<WaterEntry>()
+                    val newId = UUID.randomUUID().toString()
+                    val time = System.currentTimeMillis()
+
+                    transaction {
+                        WaterEntriesTable.insert {
+                            it[id] = newId
+                            it[WaterEntriesTable.userId] = userId
+                            it[amountMl] = entry.amountMl
+                            it[timestamp] = time
+                        }
+                    }
+                    call.respond(HttpStatusCode.Created, WaterEntry(newId, entry.amountMl, time))
+                }
+                
+                delete("/{id}") {
+                    val principal = call.principal<JWTPrincipal>()
+                    val userId = principal!!.payload.getClaim("userId").asString()
+                    val idToDelete = call.parameters["id"] ?: return@delete call.respond(HttpStatusCode.BadRequest)
+                    
+                    val deleted = transaction {
+                        WaterEntriesTable.deleteWhere { (WaterEntriesTable.id eq idToDelete) and (WaterEntriesTable.userId eq userId) }
+                    }
+                    
+                    if (deleted > 0) call.respond(mapOf("status" to "Deleted"))
+                    else call.respond(HttpStatusCode.NotFound)
                 }
             }
         }
