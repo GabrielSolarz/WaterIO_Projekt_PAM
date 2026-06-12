@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
             .fallbackToDestructiveMigration().build()
         val tokenManager = TokenManager(applicationContext)
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080")
+            .baseUrl("http://10.0.2.2:8080/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
         val api = retrofit.create(WaterApiService::class.java)
@@ -201,7 +201,7 @@ fun StatsScreen(viewModel: WaterViewModel, navController: androidx.navigation.Na
             // Uproszczony wykres kolumnowy w czystym Compose
             Row(
                 modifier = Modifier.fillMaxWidth().height(250.dp).padding(16.dp),
-                horizontalArrangement = Arrangement.spaceAround,
+                horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.Bottom
             ) {
                 stats.forEach { stat ->

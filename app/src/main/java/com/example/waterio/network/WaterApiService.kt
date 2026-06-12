@@ -5,7 +5,7 @@ import retrofit2.http.*
 
 data class AuthRequest(val email: String, val password: String)
 data class AuthResponse(val token: String)
-data class RegisterResponse(val status: String)
+data class RegisterResponse(val status: String? = null, val error: String? = null)
 data class WaterNetworkEntry(val id: String?, val amountMl: Int, val timestamp: Long?)
 data class DailyGoal(val goalMl: Int)
 data class DailyStat(val date: String, val totalMl: Int)

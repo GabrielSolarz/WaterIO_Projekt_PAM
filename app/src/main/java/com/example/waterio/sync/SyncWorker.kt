@@ -23,7 +23,7 @@ class SyncWorker(appContext: Context, workerParams: WorkerParameters) : Coroutin
 
         val retrofit = Retrofit.Builder()
             // 10.0.2.2 to adres IP komputera hosta widoczny z poziomu emulatora Androida
-            .baseUrl("http://10.0.2.2:8080")
+            .baseUrl("http://10.0.2.2:8080/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
         val api = retrofit.create(WaterApiService::class.java)
