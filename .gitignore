@@ -13,3 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# H2 Database files
+*.mv.db
+*.trace.db
