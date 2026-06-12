@@ -140,17 +140,20 @@ fun Application.configureRouting() {
                     val userId = principal!!.payload.getClaim("userId").asString()
                     val entry = call.receive<WaterEntry>()
                     val newId = UUID.randomUUID().toString()
-                    val time = System.currentTimeMillis()
+                    
+                    // Jeśli klient wysłał timestamp (synchronizacja offline), używamy go. 
+                    // W przeciwnym razie nadajemy aktualny czas serwera.
+                    val finalTimestamp = entry.timestamp ?: System.currentTimeMillis()
 
                     transaction {
                         WaterEntriesTable.insert {
                             it[id] = newId
                             it[WaterEntriesTable.userId] = userId
                             it[amountMl] = entry.amountMl
-                            it[timestamp] = time
+                            it[timestamp] = finalTimestamp
                         }
                     }
-                    call.respond(HttpStatusCode.Created, WaterEntry(newId, entry.amountMl, time))
+                    call.respond(HttpStatusCode.Created, WaterEntry(newId, entry.amountMl, finalTimestamp))
                 }
                 
                 delete("/{id}") {
@@ -226,6 +229,46 @@ fun Application.configureRouting() {
                 }.sortedByDescending { it.date }
 
                 call.respond(grouped)
+            }
+
+            get("/streak") {
+                val principal = call.principal<JWTPrincipal>()
+                val userId = principal!!.payload.getClaim("userId").asString()
+
+                val (goal, entries) = transaction {
+                    val userGoal = UsersTable.selectAll().where { UsersTable.id eq userId }
+                        .singleOrNull()?.get(UsersTable.dailyGoalMl) ?: 2000
+                    
+                    val waterEntries = WaterEntriesTable.selectAll()
+                        .where { WaterEntriesTable.userId eq userId }
+                        .map { it[WaterEntriesTable.timestamp] to it[WaterEntriesTable.amountMl] }
+                    
+                    userGoal to waterEntries
+                }
+
+                // Grupowanie po dniach
+                val dailyTotals = entries.groupBy {
+                    java.time.Instant.ofEpochMilli(it.first)
+                        .atZone(java.time.ZoneId.systemDefault())
+                        .toLocalDate()
+                }.mapValues { it.value.sumOf { entry -> entry.second } }
+
+                var streak = 0
+                val currentDate = java.time.LocalDate.now()
+
+                // Sprawdzamy czy dzisiaj cel osiągnięty
+                if ((dailyTotals[currentDate] ?: 0) >= goal) {
+                    streak++
+                }
+
+                // Sprawdzamy dni wstecz od wczoraj
+                var checkDate = currentDate.minusDays(1)
+                while (dailyTotals.containsKey(checkDate) && dailyTotals[checkDate]!! >= goal) {
+                    streak++
+                    checkDate = checkDate.minusDays(1)
+                }
+
+                call.respond(mapOf("streak" to streak))
             }
         }
     }
