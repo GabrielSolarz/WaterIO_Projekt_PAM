@@ -27,6 +27,9 @@ import com.pam.waterio.ui.AuthState
 import com.pam.waterio.ui.WaterViewModel
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -173,8 +176,12 @@ fun HistoryScreen(viewModel: WaterViewModel, navController: androidx.navigation.
                 items(history) { entry ->
                     Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                         Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            val sdf = remember { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()) }
+                            val dateString = sdf.format(Date(entry.timestamp))
+                            
                             Column {
                                 Text("Ilość: ${entry.amountMl} ml", fontWeight = FontWeight.Bold)
+                                Text("Data: $dateString", fontSize = 14.sp, color = Color.Gray)
                                 Text(if (entry.isSynced) "Zsynchronizowano ✨" else "Oczekuje offline ☁️", fontSize = 12.sp)
                             }
                             IconButton(onClick = { viewModel.deleteEntry(entry.id) }) {
