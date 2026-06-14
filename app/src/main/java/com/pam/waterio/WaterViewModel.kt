@@ -56,6 +56,14 @@ class WaterViewModel(
     }
 
     fun login(email: String, password: String) {
+        if(email.isBlank() || password.isBlank()){
+            _errorMessage.value = "Email i hasło nie mogą być puste!"
+            return
+        }
+        if(!email.contains("@") || !email.contains(".")) {
+                _errorMessage.value = "Niepoprawny format adresu email!"
+                return
+        }
         viewModelScope.launch {
             _authState.value = AuthState.LOADING
             try {
@@ -76,6 +84,18 @@ class WaterViewModel(
     }
 
     fun register(email: String, password: String) {
+        if (email.isBlank() || password.isBlank()) {
+            _errorMessage.value = "Email i hasło nie mogą być puste!"
+            return
+        }
+        if (!email.contains("@") || !email.contains(".")) {
+            _errorMessage.value = "Niepoprawny format adresu email!"
+            return
+        }
+        if (password.length < 6) {
+            _errorMessage.value = "Hasło musi mieć minimum 6 znaków!"
+            return
+        }
         viewModelScope.launch {
             _authState.value = AuthState.LOADING
             try {
