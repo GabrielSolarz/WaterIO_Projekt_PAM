@@ -20,8 +20,8 @@ object WaterEntriesTable : Table("water_entries") {
     override val primaryKey = PrimaryKey(id)
 }
 
-fun initDatabase() {
-    Database.connect("jdbc:h2:./water_db;DB_CLOSE_DELAY=-1;", driver = "org.h2.Driver")
+fun initDatabase(url: String = "jdbc:h2:./water_db;DB_CLOSE_DELAY=-1;") {
+    Database.connect(url, driver = "org.h2.Driver")
     transaction {
         SchemaUtils.create(UsersTable, WaterEntriesTable)
     }
