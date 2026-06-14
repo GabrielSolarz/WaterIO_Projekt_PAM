@@ -1,46 +1,53 @@
 # Changelog: 
 
-[v1.0.0] - 2026-06-02 (Wersja Release / Prezentacja) Dodano 
+## [v1.0.1] - 2026-06-13 (Aktualna wersja testowa w Google Play)
 
-Wykresy słupkowe prezentujące spożycie wody z ostatnich 7 dni na ekranie Statystyk. 
+Dodano czytelne daty w zakładce "Historia", umożliwiające precyzyjne przeglądanie logów nawodnienia.
 
-System motywacyjny (Streaki) na ekranie głównym. 
+Wprowadzono drobne zmiany konieczne do dodania aplikacji do Sklepu Play
 
-Opcję ręcznego wpisywania niestandardowej objętości wypitej wody. 
+## [v1.0.0] - 2026-06-12 (Wydanie główne / Release Candidate)
+Stabilizacja aplikacji, usunięcie krytycznych błędów i przygotowanie do testów w sklepie.
 
-Mechanizm powiadomień Push przypominający o piciu wody po 3 godzinach braku aktywności. 
+Ostatecznie rozwiązano problem z nieprawidłowym podwajaniem postępu nawodnienia podczas synchronizacji frontendu z serwerem.
 
-Pełną obsługę trybu offline (zapis w bazie Room i automatyczna synchronizacja z API po odzyskaniu sieci). 
+Dodano brakujące wtyczki (application plugin), zaktualizowano .gitignore oraz wprowadzono ostateczne poprawki w kodzie głównego widoku.
 
-Zmieniono 
+## [v0.3.0] - 2026-06-12 (Faza funkcji zaawansowanych i Offline-First)
+Niezawodność działania bez internetu oraz system powiadomień.
 
-Ulepszono design ekranu logowania i dodano obsługę błędów sieci. 
+Zaimplementowano klasę SyncWorker, która umożliwia użytkownikowi dodawanie wpisów bez dostępu do sieci, a następnie automatycznie synchronizuje je z serwerem w tle.
 
-Zoptymalizowano zapytania do bazy danych, aby przyspieszyć ładowanie wykresów. 
+Dodano WaterNotificationReceiver, wprowadzając mechanizm lokalnych przypomnień o piciu wody.
 
-Naprawiono 
+Utworzono TokenManager do bezpiecznego przechowywania i zarządzania tokenami sesji po stronie urządzenia.
 
-Błąd powodujący zamykanie aplikacji przy wpisaniu ujemnej wartości wody. 
+Zmodyfikowano WaterViewModel oraz WaterApiService, aby obsłużyć nowy mechanizm synchronizacji i autoryzacji.
 
-Problem z nieodświeżającym się paskiem postępu po usunięciu wpisu z historii. 
+## [v0.2.0] - 2026-06-12 (Fundamenty Aplikacji Mobilnej)
+SInicjalizacja środowiska Android, budowa interfejsu i połączenie z bazą.
 
-[v0.5.0] - (Wersja Beta) Dodano 
+Przeprowadzono refaktoryzację kodu, oficjalnie zmieniając nazwę aplikacji na WaterIO.
 
-Ekran główny (Dashboard) z okrągłym paskiem postępu (Circular Progress Bar). 
+Dodano główną klasę modelu WaterEntry dla frontendu.
 
-Przyciski szybkiego dodawania wody (+250ml, +500ml). 
+Utworzono WaterViewModel do dynamicznego zarządzania stanem śledzenia wypitej wody.
 
-Ekran "Historia" z listą dzisiejszych wpisów i opcją ich usuwania. 
+Pomyślnie połączono ekran główny (WaterDashboardScreen) z lokalną bazą danych (Room) oraz warstwą logiki (WaterViewModel).
 
-Ustawienia pozwalające na zdefiniowanie własnego celu dziennego. 
+Utworzono WaterApiService przygotowując aplikację do komunikacji z zewnętrznymi endpointami logowania i wysyłania danych.
 
-[v0.1.0] - (Initial MVP) Dodano 
+## [v0.1.0] - 2026-06-11 (Inicjalizacja Backendu)
+Skupienie: Baza danych, autoryzacja i stworzenie logiki serwerowej (API).
 
-Inicjalizacja projektu w Android Studio (Kotlin). 
+Zainicjowano projekt backendowy.
 
-Podstawowy ekran autoryzacji (Rejestracja i Logowanie). 
+Wdrożono prostą bazę danych oraz zaimplementowano podstawowe operacje CRUD dla modelu wpisów.
 
-Konfiguracja API i integracja autoryzacji JWT. 
+Dodano i pomyślnie skonfigurowano system logowania i autoryzacji oparty na tokenach JWT.
+
+Stworzono zestaw początkowych endpointów
+
 
  
 
