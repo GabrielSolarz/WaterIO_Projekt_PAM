@@ -96,7 +96,9 @@ fun LoginScreen(viewModel: WaterViewModel) {
     val authState by viewModel.authState.collectAsState()
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(32.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -130,6 +132,7 @@ fun DashboardScreen(viewModel: WaterViewModel, navController: androidx.navigatio
     val currentWater by viewModel.totalWater.collectAsState()
     val dailyGoal by viewModel.dailyGoal.collectAsState()
     val streak by viewModel.streak.collectAsState()
+    val error by viewModel.errorMessage.collectAsState()
     var customAmount by remember { mutableStateOf("") }
 
     val progress = (currentWater.toFloat() / dailyGoal).coerceIn(0f, 1f)
@@ -138,7 +141,10 @@ fun DashboardScreen(viewModel: WaterViewModel, navController: androidx.navigatio
         bottomBar = { BottomNavigationBar(navController) }
     ) { padding ->
         Column(
-            modifier = Modifier.padding(padding).fillMaxSize().padding(16.dp),
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -147,6 +153,11 @@ fun DashboardScreen(viewModel: WaterViewModel, navController: androidx.navigatio
             }
             Spacer(modifier = Modifier.height(16.dp))
             Text("Wypito dzisiaj:", fontSize = 20.sp)
+
+            if (error != null) {
+                Text(error!!, color = Color.Red, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            }
+
             Text("$currentWater / $dailyGoal ml", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -180,13 +191,20 @@ fun HistoryScreen(viewModel: WaterViewModel, navController: androidx.navigation.
     val history by viewModel.history.collectAsState()
 
     Scaffold(bottomBar = { BottomNavigationBar(navController) }) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize().padding(16.dp)) {
+        Column(modifier = Modifier
+            .padding(padding)
+            .fillMaxSize()
+            .padding(16.dp)) {
             Text("Historia Nawodnienia", fontSize = 24.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
             LazyColumn {
                 items(history) { entry ->
-                    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                        Row(modifier = Modifier.padding(16.dp).fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Card(modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)) {
+                        Row(modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             val sdf = remember { SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()) }
                             val dateString = sdf.format(Date(entry.timestamp))
                             
@@ -212,13 +230,19 @@ fun StatsScreen(viewModel: WaterViewModel, navController: androidx.navigation.Na
     val stats by viewModel.stats.collectAsState()
 
     Scaffold(bottomBar = { BottomNavigationBar(navController) }) { padding ->
-        Column(modifier = Modifier.padding(padding).fillMaxSize().padding(16.dp)) {
+        Column(modifier = Modifier
+            .padding(padding)
+            .fillMaxSize()
+            .padding(16.dp)) {
             Text("Statystyki Ostatnich Dni", fontSize = 24.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(32.dp))
 
             // Uproszczony wykres kolumnowy w czystym Compose
             Row(
-                modifier = Modifier.fillMaxWidth().height(250.dp).padding(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(250.dp)
+                    .padding(16.dp),
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.Bottom
             ) {
@@ -226,7 +250,10 @@ fun StatsScreen(viewModel: WaterViewModel, navController: androidx.navigation.Na
                     val barHeight = (stat.totalMl / 3000f).coerceIn(0.1f, 1f) * 200
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("${stat.totalMl}", fontSize = 10.sp)
-                        Box(modifier = Modifier.width(30.dp).height(barHeight.dp).background(MaterialTheme.colorScheme.primary))
+                        Box(modifier = Modifier
+                            .width(30.dp)
+                            .height(barHeight.dp)
+                            .background(MaterialTheme.colorScheme.primary))
                         Text(stat.date.substring(5), fontSize = 10.sp)
                     }
                 }
@@ -239,15 +266,24 @@ fun StatsScreen(viewModel: WaterViewModel, navController: androidx.navigation.Na
 @Composable
 fun ProfileScreen(viewModel: WaterViewModel, navController: androidx.navigation.NavController) {
     val dailyGoal by viewModel.dailyGoal.collectAsState()
+    val error by viewModel.errorMessage.collectAsState()
     var newGoal by remember { mutableStateOf(dailyGoal.toString()) }
 
     Scaffold(bottomBar = { BottomNavigationBar(navController) }) { padding ->
         Column(
-            modifier = Modifier.padding(padding).fillMaxSize().padding(32.dp),
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+                .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Twój Profil", fontSize = 24.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(32.dp))
+
+            if (error != null) {
+                Text(error!!, color = Color.Red, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            }
+
             OutlinedTextField(value = newGoal, onValueChange = { newGoal = it }, label = { Text("Dzienny cel (ml)") }, modifier = Modifier.fillMaxWidth())
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = { viewModel.updateGoal(newGoal.toIntOrNull() ?: 2000) }, modifier = Modifier.fillMaxWidth()) {

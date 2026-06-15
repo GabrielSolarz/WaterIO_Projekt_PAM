@@ -17,6 +17,7 @@ class SyncWorker(appContext: Context, workerParams: WorkerParameters) : Coroutin
     override suspend fun doWork(): Result {
         val tokenManager = TokenManager(applicationContext)
         val token = tokenManager.getToken() ?: return Result.failure()
+        val userEmail = tokenManager.getEmail() ?: ""
         val bearerToken = "Bearer $token"
 
         val db = Room.databaseBuilder(applicationContext, AppDatabase::class.java, "water-database")
@@ -31,7 +32,7 @@ class SyncWorker(appContext: Context, workerParams: WorkerParameters) : Coroutin
         val api = retrofit.create(WaterApiService::class.java)
 
         return try {
-            val unsynced = dao.getUnsyncedEntries()
+            val unsynced = dao.getUnsyncedEntries(userEmail)
             Log.d("WaterSync", "Found ${unsynced.size} unsynced entries")
             
             unsynced.forEach { entry ->
@@ -43,9 +44,9 @@ class SyncWorker(appContext: Context, workerParams: WorkerParameters) : Coroutin
                     // Usuwamy stary wpis i wstawiamy nowy z ID z serwera (jeśli się różnią)
                     if (result.id != null && result.id != entry.id) {
                         dao.deletePermanently(entry.id)
-                        dao.insert(entry.copy(id = result.id, isSynced = true))
+                        dao.insert(entry.copy(id = result.id, isSynced = true, userEmail = userEmail))
                     } else {
-                        dao.insert(entry.copy(isSynced = true))
+                        dao.insert(entry.copy(isSynced = true, userEmail = userEmail))
                     }
                 }
             }

@@ -9,7 +9,8 @@ data class WaterEntry(
     val amountMl: Int,
     val timestamp: Long = System.currentTimeMillis(),
     val isSynced: Boolean = false,
-    val isDeletedLocally: Boolean = false // Dla obsługi usuwania w trybie offline
+    val isDeletedLocally: Boolean = false,
+    val userEmail: String = "" // Powiązanie wpisu z konkretnym użytkownikiem
 )
 
 @Dao
@@ -17,11 +18,11 @@ interface WaterDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(entry: WaterEntry)
 
-    @Query("SELECT * FROM water_entries WHERE isDeletedLocally = 0 ORDER BY timestamp DESC")
-    suspend fun getAllEntries(): List<WaterEntry>
+    @Query("SELECT * FROM water_entries WHERE userEmail = :email AND isDeletedLocally = 0 ORDER BY timestamp DESC")
+    suspend fun getAllEntries(email: String): List<WaterEntry>
 
-    @Query("SELECT * FROM water_entries WHERE isSynced = 0")
-    suspend fun getUnsyncedEntries(): List<WaterEntry>
+    @Query("SELECT * FROM water_entries WHERE userEmail = :email AND isSynced = 0")
+    suspend fun getUnsyncedEntries(email: String): List<WaterEntry>
 
     @Query("UPDATE water_entries SET isDeletedLocally = 1 WHERE id = :id")
     suspend fun markAsDeleted(id: String)
@@ -30,7 +31,7 @@ interface WaterDao {
     suspend fun deletePermanently(id: String)
 }
 
-@Database(entities = [WaterEntry::class], version = 2)
+@Database(entities = [WaterEntry::class], version = 3) // Podniesienie wersji bazy danych
 abstract class AppDatabase : RoomDatabase() {
     abstract fun waterDao(): WaterDao
 }

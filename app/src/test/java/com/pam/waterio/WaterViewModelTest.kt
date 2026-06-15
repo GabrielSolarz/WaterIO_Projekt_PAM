@@ -78,6 +78,7 @@ class WaterViewModelTest {
         every { PendingIntent.getBroadcast(any<Context>(), any<Int>(), any<Intent>(), any<Int>()) } returns mockk<PendingIntent>()
 
         every { tokenManager.getToken() } returns null
+        every { tokenManager.getEmail() } returns null
         every { tokenManager.getGoal() } returns 2000
 
         viewModel = WaterViewModel(dao, api, tokenManager, context)
@@ -100,7 +101,7 @@ class WaterViewModelTest {
         coEvery { api.getHistory(any<String>()) } returns emptyList()
         coEvery { api.getStreak(any<String>()) } returns StreakResponse(3)
         coEvery { api.getStats(any<String>()) } returns emptyList()
-        coEvery { dao.getAllEntries() } returns emptyList()
+        coEvery { dao.getAllEntries(any<String>()) } returns emptyList()
 
         // Create a new ViewModel instance to trigger init
         val newViewModel = WaterViewModel(dao, api, tokenManager, context)
@@ -128,7 +129,7 @@ class WaterViewModelTest {
         coEvery { api.getHistory(any<String>()) } returns emptyList()
         coEvery { api.getStreak(any<String>()) } returns StreakResponse(5)
         coEvery { api.getStats(any<String>()) } returns emptyList()
-        coEvery { dao.getAllEntries() } returns emptyList()
+        coEvery { dao.getAllEntries(any<String>()) } returns emptyList()
 
         viewModel.login(email, password)
         
@@ -169,8 +170,9 @@ class WaterViewModelTest {
         val amount = 250
         val token = "jwt-token"
         every { tokenManager.getToken() } returns token
+        every { tokenManager.getEmail() } returns "test@example.com"
         coEvery { dao.insert(any<WaterEntry>()) } just Runs
-        coEvery { dao.getAllEntries() } returns emptyList()
+        coEvery { dao.getAllEntries(any<String>()) } returns emptyList()
         coEvery { api.addWater(any<String>(), any<WaterNetworkEntry>()) } returns WaterNetworkEntry("remote-id", amount, 123456789L)
         coEvery { dao.deletePermanently(any<String>()) } just Runs
         
@@ -198,13 +200,15 @@ class WaterViewModelTest {
         
         // refreshData mocks
         every { tokenManager.saveToken(any<String>()) } just Runs
+        every { tokenManager.saveEmail(any<String>()) } just Runs
         every { tokenManager.getToken() } returns "token"
+        every { tokenManager.getEmail() } returns "new@example.com"
         coEvery { api.getGoal(any<String>()) } returns DailyGoal(2000)
         every { tokenManager.saveGoal(any<Int>()) } just Runs
         coEvery { api.getHistory(any<String>()) } returns emptyList()
         coEvery { api.getStreak(any<String>()) } returns StreakResponse(0)
         coEvery { api.getStats(any<String>()) } returns emptyList()
-        coEvery { dao.getAllEntries() } returns emptyList()
+        coEvery { dao.getAllEntries(any<String>()) } returns emptyList()
 
         viewModel.register(email, password)
         
@@ -218,6 +222,7 @@ class WaterViewModelTest {
     fun `refreshData updates all states when token exists`() = runTest {
         val token = "jwt-token"
         every { tokenManager.getToken() } returns token
+        every { tokenManager.getEmail() } returns "test@example.com"
         
         coEvery { api.getGoal(any<String>()) } returns DailyGoal(2200)
         every { tokenManager.saveGoal(2200) } just Runs
@@ -225,7 +230,7 @@ class WaterViewModelTest {
         coEvery { dao.insert(any<WaterEntry>()) } just Runs
         coEvery { api.getStreak(any<String>()) } returns StreakResponse(7)
         coEvery { api.getStats(any<String>()) } returns listOf(DailyStat("2024-01-01", 1500))
-        coEvery { dao.getAllEntries() } returns listOf(WaterEntry("1", 200, System.currentTimeMillis()))
+        coEvery { dao.getAllEntries(any<String>()) } returns listOf(WaterEntry("1", 200, System.currentTimeMillis()))
 
         viewModel.refreshData()
         

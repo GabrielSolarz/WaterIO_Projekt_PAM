@@ -70,6 +70,7 @@ class WaterViewModel(
                 val response = api.login(AuthRequest(email, password))
                 if (response.isSuccessful && response.body() != null) {
                     tokenManager.saveToken(response.body()!!.token)
+                    tokenManager.saveEmail(email) // Zapisujemy email po zalogowaniu
                     _authState.value = AuthState.SUCCESS
                     refreshData()
                 } else {
@@ -119,9 +120,13 @@ class WaterViewModel(
     }
 
     fun addWater(amount: Int) {
-        if (amount <= 0) return
+        if (amount <= 0) {
+            _errorMessage.value = "Podaj poprawną ilość wody (większą od 0)!"
+            return
+        }
+        val userEmail = tokenManager.getEmail() ?: ""
         viewModelScope.launch {
-            val newEntry = WaterEntry(amountMl = amount, isSynced = false)
+            val newEntry = WaterEntry(amountMl = amount, isSynced = false, userEmail = userEmail)
             dao.insert(newEntry)
             loadLocalData()
             scheduleNotification()
@@ -171,6 +176,10 @@ class WaterViewModel(
     }
 
     fun updateGoal(newGoal: Int) {
+        if (newGoal < 500 || newGoal > 10000) {
+            _errorMessage.value = "Cel musi być między 500 a 10000 ml!"
+            return
+        }
         tokenManager.saveGoal(newGoal)
         _dailyGoal.value = newGoal
         val token = tokenManager.getToken() ?: return
@@ -192,8 +201,9 @@ class WaterViewModel(
                 _dailyGoal.value = remoteGoal.goalMl
 
                 val remoteHistory = api.getHistory(bearer)
+                val userEmail = tokenManager.getEmail() ?: ""
                 remoteHistory.forEach {
-                    dao.insert(com.pam.waterio.data.WaterEntry(it.id ?: "", it.amountMl, it.timestamp ?: 0L, isSynced = true))
+                    dao.insert(com.pam.waterio.data.WaterEntry(it.id ?: "", it.amountMl, it.timestamp ?: 0L, isSynced = true, userEmail = userEmail))
                 }
 
                 _streak.value = api.getStreak(bearer).streak
@@ -206,8 +216,9 @@ class WaterViewModel(
     }
 
     private fun loadLocalData() {
+        val userEmail = tokenManager.getEmail() ?: ""
         viewModelScope.launch {
-            val localEntries = dao.getAllEntries()
+            val localEntries = dao.getAllEntries(userEmail)
             _history.value = localEntries
 
             // Filtrowanie i sumowanie dzisiejszego spożycia lokalnie (czas lokalny)
