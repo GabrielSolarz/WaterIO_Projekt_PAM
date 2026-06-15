@@ -78,11 +78,24 @@ fun Application.module() {
 }
 
 fun Application.configureRouting() {
+    val emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\$".toRegex()
+
     routing {
-        get("/") { call.respondText("WaterIO Backend with Auth!") }
+        get("/") { call.respondText("WaterIO Backend with Auth and Validation!") }
 
         post("/register") {
             val req = call.receive<AuthRequest>()
+
+            if (!req.email.matches(emailRegex)) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Invalid email format"))
+                return@post
+            }
+
+            if (req.password.length < 6) {
+                call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Password must be at least 6 characters long"))
+                return@post
+            }
+
             val userId = UUID.randomUUID().toString()
             val hashedPw = BCrypt.hashpw(req.password, BCrypt.gensalt())
             
@@ -139,6 +152,12 @@ fun Application.configureRouting() {
                     val principal = call.principal<JWTPrincipal>()
                     val userId = principal!!.payload.getClaim("userId").asString()
                     val entry = call.receive<WaterEntry>()
+
+                    if (entry.amountMl <= 0) {
+                        call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Amount must be greater than 0"))
+                        return@post
+                    }
+
                     val newId = UUID.randomUUID().toString()
                     
                     // Jeśli klient wysłał timestamp (synchronizacja offline), używamy go. 
