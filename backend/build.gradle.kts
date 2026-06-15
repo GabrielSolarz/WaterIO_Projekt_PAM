@@ -7,6 +7,14 @@ plugins {
 group = "com.example.waterio"
 version = "1.0.0"
 
+application {
+    mainClass.set("com.pam.waterio.ApplicationKt")
+}
+
+kotlin {
+    jvmToolchain(11)
+}
+
 dependencies {
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)
