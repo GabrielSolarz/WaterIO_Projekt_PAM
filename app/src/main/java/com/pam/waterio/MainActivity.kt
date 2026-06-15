@@ -50,7 +50,7 @@ class MainActivity : ComponentActivity() {
             .fallbackToDestructiveMigration().build()
         val tokenManager = TokenManager(applicationContext)
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080/")
+            .baseUrl("https://waterio-api.onrender.com/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
         val api = retrofit.create(WaterApiService::class.java)
