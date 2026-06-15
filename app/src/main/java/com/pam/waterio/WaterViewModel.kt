@@ -56,6 +56,7 @@ class WaterViewModel(
     }
 
     fun login(email: String, password: String) {
+        _errorMessage.value = null
         if(email.isBlank() || password.isBlank()){
             _errorMessage.value = "Email i hasło nie mogą być puste!"
             return
@@ -85,6 +86,7 @@ class WaterViewModel(
     }
 
     fun register(email: String, password: String) {
+        _errorMessage.value = null
         if (email.isBlank() || password.isBlank()) {
             _errorMessage.value = "Email i hasło nie mogą być puste!"
             return
@@ -120,6 +122,7 @@ class WaterViewModel(
     }
 
     fun addWater(amount: Int) {
+        _errorMessage.value = null
         if (amount <= 0) {
             _errorMessage.value = "Podaj poprawną ilość wody (większą od 0)!"
             return
@@ -175,7 +178,12 @@ class WaterViewModel(
         }
     }
 
-    fun updateGoal(newGoal: Int) {
+    fun updateGoal(newGoal: Int?) {
+        _errorMessage.value = null
+        if (newGoal == null) {
+            _errorMessage.value = "Wpisz poprawną liczbę!"
+            return
+        }
         if (newGoal < 500 || newGoal > 10000) {
             _errorMessage.value = "Cel musi być między 500 a 10000 ml!"
             return

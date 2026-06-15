@@ -69,12 +69,19 @@ class MainActivity : ComponentActivity() {
 fun AppNavigation(viewModel: WaterViewModel) {
     val navController = rememberNavController()
     val authState by viewModel.authState.collectAsState()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+
+    LaunchedEffect(navBackStackEntry) {
+        viewModel.clearError()
+    }
 
     LaunchedEffect(authState) {
         if (authState == AuthState.SUCCESS) {
             navController.navigate("dashboard") { popUpTo("login") { inclusive = true } }
         } else if (authState == AuthState.UNAUTHENTICATED) {
-            navController.navigate("login") { popUpTo(0) }
+            if (navController.currentDestination?.route != "login") {
+                navController.navigate("login") { popUpTo(0) }
+            }
         }
     }
 
@@ -268,7 +275,6 @@ fun ProfileScreen(viewModel: WaterViewModel, navController: androidx.navigation.
     val dailyGoal by viewModel.dailyGoal.collectAsState()
     val error by viewModel.errorMessage.collectAsState()
     var newGoal by remember { mutableStateOf(dailyGoal.toString()) }
-
     Scaffold(bottomBar = { BottomNavigationBar(navController) }) { padding ->
         Column(
             modifier = Modifier
@@ -286,7 +292,7 @@ fun ProfileScreen(viewModel: WaterViewModel, navController: androidx.navigation.
 
             OutlinedTextField(value = newGoal, onValueChange = { newGoal = it }, label = { Text("Dzienny cel (ml)") }, modifier = Modifier.fillMaxWidth())
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { viewModel.updateGoal(newGoal.toIntOrNull() ?: 2000) }, modifier = Modifier.fillMaxWidth()) {
+            Button(onClick = { viewModel.updateGoal(newGoal.toIntOrNull()) }, modifier = Modifier.fillMaxWidth()) {
                 Text("Zapisz Cel")
             }
             Spacer(modifier = Modifier.height(48.dp))
